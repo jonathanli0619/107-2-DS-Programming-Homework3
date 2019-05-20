@@ -43,18 +43,23 @@ test # 最後一行打指定物件名稱
 ```{r data1}
 library(readr)
 finStatement <- read_csv("http://mopsfin.twse.com.tw/opendata/t187ap06_O_ci.csv")
+finStatement
 ```
 
 ### 1.1 營業利益
 變數**營業利益（損失）**是公司本業的利益（若為正值）或損失（若為負值）。請找出有營業損失的公司名稱，存成character class的答案物件loss1Companies。
 ```{r ans11}
-# loss1Companies
+logic<-finStatement[[16]]<0
+loss1Companies<- finStatement$公司名稱[logic]
+loss1Companies
 ```
 
 ### 1.2 每股盈餘
 請找出每股盈餘為負值的公司名稱，存成character class的答案物件loss2Companies。
 ```{r ans12}
-# loss2Companies
+logic1<-finStatement[[33]]<0
+loss2Companies<- finStatement$公司名稱[logic1]
+loss2Companies
 ```
 
 ### 1.3 單一條件成立
@@ -68,13 +73,20 @@ finStatement <- read_csv("http://mopsfin.twse.com.tw/opendata/t187ap06_O_ci.csv"
 的公司名稱，存成character class的答案物件only1LossCompanies。
 
 ```{r ans13}
-# only1LossCompanies
+logic2<-(finStatement[[16]]>0) & (finStatement[[33]]<0)
+logic3<-(finStatement[[16]]<0) & (finStatement[[33]]>0)
+only1LossCompanies<- finStatement$公司名稱[logic2 | logic3]
+only1LossCompanies
 ```
 
 ### 1.4 子樣本
 本題物件為data frame class，使用`[.R,.C]`選出符合上題條件的子樣本，存成data frame class的答案物件subsample。
 ```{r ans14}
 # subsample
+subsample <- data.frame(
+  company = only1LossCompanies
+)
+subsample
 ```
 
 ## 2 展覽資訊
@@ -93,7 +105,8 @@ str(exhibitionList[[1]])
 
 請使用`length()`檢查exhibitionList裡的活動數目，並把數值存在答案物件numExhibitions。
 ```{r ans21}
-# numExhibitions
+length(exhibitionList) -> numExhibitions
+numExhibitions
 ```
 
 ### 2.2 創建活動data frame
@@ -108,7 +121,17 @@ str(exhibitionList[[1]])
 
 
 ```{r ans22}
-# df_oneShow
+df_oneShow <- data.frame(
+      title = c(exhibitionList[[1]][[3]]),
+      time =c(exhibitionList[[1]][[5]][[1]][[1]]),
+      location =c(exhibitionList[[1]][[5]][[1]][[2]]),
+      locationName =c(exhibitionList[[1]][[5]][[1]][[3]]),
+      price =c(exhibitionList[[1]][[5]][[1]][[5]]),
+      endTime =c(exhibitionList[[1]][[5]][[1]][[8]]),
+      sourceWebName =c(exhibitionList[[1]][[18]]),
+      stringsAsFactors = F
+) 
+df_oneShow
 ```
 
 ### 2.3 活動創立函數
@@ -124,7 +147,20 @@ return(df_oneShow)
 `dataframe_show_info()`可用來查詢任何一個展覽訊息，如`dataframe_show_info(exhibitionList[[5]])`會output一個代表第5個展覽的data frame格式訊息。本題最後一行請打`dataframe_show_info`不要有小刮號`()`。
 
 ```{r ans23}
-#  dataframe_show_info
+dataframe_show_info <- function(exhibitionInput){
+df_oneShow <- data.frame(
+      title = c(exhibitionInput[[3]]),
+      time =c(exhibitionInput[[5]][[1]][[1]]),
+      location =c(exhibitionInput[[5]][[1]][[2]]),
+      locationName =c(exhibitionInput[[5]][[1]][[3]]),
+      price =c(exhibitionInput[[5]][[1]][[5]]),
+      endTime =c(exhibitionInput[[5]][[1]][[8]]),
+      sourceWebName =c(exhibitionInput[[18]]),
+      stringsAsFactors = FALSE
+) 
+return(df_oneShow)
+}
+dataframe_show_info
 ```
 
 ### 2.4 活動資訊來源種類
@@ -133,19 +169,23 @@ purrr套件裡的`map_dfr(物件,data_frame產生函數名稱)`可以把`物件`
 ```{r}
 library(purrr)
 map_dfr(exhibitionList,dataframe_show_info) -> df_allShows
+df_allShows
 ```
 
 請將df_allShows的sourceWebName元素轉成factor class，最後一行寫`levels(df_allShows$sourceWebName)`顯示活動資訊來源所有類別。
 
 ```{r ans24}
-# levels(df_allShows$sourceWebName)
+factor(df_allShows$sourceWebName) -> df_allShows$sourceWebName
+levels(df_allShows$sourceWebName)
 ```
 
 ### 2.5 計算單一來源
 來自"全國藝文活動資訊系統"的展覽有幾筆，答案存在numeric class物件totalCount。(hint: 將logical vector裡的TRUE加總)
 
 ```{r ans25}
-# totalCount
+totalCount<-sum(df_allShows$sourcewebName=="全國藝文活動資訊系統")
+totalCount<-as.numeric(totalCount)
+totalCount
 ```
 
 
